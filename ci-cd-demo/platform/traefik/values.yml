@@ -1,0 +1,16 @@
+# Values per il chart Helm di Traefik.
+# Qui metti SOLO le chiavi che vuoi cambiare rispetto ai default del chart.
+# I default completi stanno nel values.yaml del chart, alla versione fissata
+# in apps/traefik.yml (targetRevision): li trovi su ArtifactHub, tab "Default values".
+
+# Se il cluster è locale (kind, minikube, Docker Desktop) o bare metal senza
+# MetalLB, un Service LoadBalancer resta <pending> e ArgoCD vede l'app
+# "Progressing" all'infinito. In quel caso scommenta:
+# service:
+#   type: NodePort
+
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true   # utile in fase di studio: vedi ogni richiesta nei log del pod

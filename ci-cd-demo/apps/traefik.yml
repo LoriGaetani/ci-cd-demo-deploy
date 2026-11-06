@@ -1,0 +1,33 @@
+# apps/traefik.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"     # ordine per il deploy. dato che potrebbero esserci app che dipendono da questa è meglio dargli più priorità. se es. traefik dipende da cert-manager allora a questa dobbiamo dargli ordine 0. 
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # se decidiamo di eliminare traefik tutti i relativi pod e service sono eliminati (tutte le risorse del cluster)
+spec:
+  project: default
+  sources: # ci sono due sorgenti: il chart ufficiale e la mia configurazione (values)
+    - repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: "42.3.1" # -> version of the helm chart, not of traefik itself
+      helm:
+        releaseName: traefik
+        valueFiles:
+          - $values/ci-cd-demo/platform/traefik/values.yml   # $values = radice del repo con ref "values"
+    - repoURL: https://github.com/LoriGaetani/ci-cd-demo-deploy.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik                   # ← QUI sì, il namespace del software
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true # crea il namespace se non esiste
+      - ServerSideApply=true # aggira un limite k8s per le crd

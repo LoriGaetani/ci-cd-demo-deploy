@@ -1,0 +1,21 @@
+# bootstrap/root.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+
+spec:
+  # i progetti servono a raggruppare applicazioni e impostare di RBAC
+  project: default
+  source:
+    repoURL: https://github.com/LoriGaetani/ci-cd-demo-deploy.git
+    targetRevision: main # branch che devo osservare
+    path: ci-cd-demo/apps       # ← path relativo alla RADICE del repo Git
+  destination:
+    server: https://kubernetes.default.svc # indirizzo del cluster
+    namespace: argocd           # ← le figlie sono oggetti che vivono in "argocd"
+  syncPolicy:
+    automated: # la sincronizzazione aavviene in automatico quando ci sono modifiche Git
+      prune: true # quando elimino lo yaml la risorsa corrispondente viene tolta dal cluster
+      selfHeal: true # impedisce modifiche manuali sul cluster. non posso lanciare kubectl per fare modifiche
