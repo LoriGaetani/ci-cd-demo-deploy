@@ -1,0 +1,28 @@
+# apps/cnpg.yml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"   # fondamenta: installa i CRD che il Cluster Postgres (passo 2) userà
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # se elimino l'app, Argo elimina le sue risorse (ma NON i CRD: hanno helm.sh/resource-policy: keep)
+spec:
+  project: default
+  source:                                # una sola source: non cambio nessun default del chart, quindi niente values.yml
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: cloudnative-pg
+    targetRevision: "0.29.1"             # versione del CHART (= operator 1.30.1, la stessa installata a mano)
+    helm:
+      releaseName: cnpg                  # stesso nome di ieri: le risorse si chiamano come quelle già nel cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cnpg-system               # dove gira l'operator, non dove staranno i database
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true             # obbligatorio: i CRD di CNPG sono troppo grandi per il client-side apply
