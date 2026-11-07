@@ -1,0 +1,19 @@
+# non serve indicare un namespace perchè argo prende quello destination dell'app
+
+# services/todolist/postgres.yml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: todolist-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo non cancellerà MAI questo oggetto
+spec:
+  instances: 1                          # minikube ha un solo nodo: più repliche sullo stesso nodo non danno vera alta affidabilità
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie   # versione decisa in Git, non lasciata al default dell'operator
+  bootstrap:
+    initdb:
+      database: todolist                # stesso nome che usi in compose.yaml
+      owner: todolist                   # utente proprietario: le sue credenziali finiscono nel Secret todolist-db-app
+  storage:
+    size: 1Gi
+    #storageClass: standard-retain       # la StorageClass con Retain

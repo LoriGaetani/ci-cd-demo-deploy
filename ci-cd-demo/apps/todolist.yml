@@ -1,0 +1,31 @@
+# apps/todolist.yml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: todolist
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"   # dopo la piattaforma (cnpg 0, storage 0, traefik 1)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # elimina tutto TRANNE ciò che ha Delete=false (il database)
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/LoriGaetani/ci-cd-demo-deploy.git
+    targetRevision: main
+    path: ci-cd-demo/services/todolist  # qui ora c'è solo il DB; poi Deployment, Service, IngressRoute
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: todolist                 # tutto il microservizio vive qui, DB compreso
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:                              # su un cluster nuovo CNPG potrebbe non essere ancora pronto
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
